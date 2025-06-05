@@ -2,15 +2,15 @@ import numpy as np
 import random
 import math
 
-# Parâmetros do drone (conforme artigo)
-G = 9.81      # Gravidade
-ne = 0.66     # Eficiência de transferência de energia
-r = 3.5       # Razão do arrasto
-Fsb = 1.25    # Fator de segurança da bateria
-ma = 10.1     # Massa do drone + bateria (kg)
-B = 2_797_200 # Energia total da bateria (J)
+# parâmetros do drone
+G = 9.81              # gravidade
+ne = 0.66             # eficiência de transferência de energia
+r = 3.5               # razão do arrasto
+Fsb = 1.25            # fator de segurança da bateria
+ma = 10.1             # massa do drone + bateria (kg)
+B = 2_797_200         # energia total da bateria (J)
 
-# Função de consumo de bateria bij
+# cálculo do consumo de bateria bij
 def calc_bij(wi, dij):
   return dij * (2 * ma + wi) * Fsb * G / (ne * r)
 
@@ -23,7 +23,7 @@ def abrir_facilidades(n, m, p, wi, dij, t=10):
       bij[i][j] = calc_bij(wi[i], dij[i][j])
       wtij[i][j] = wi[i] / bij[i][j] if bij[i][j] <= B else 0
 
-  # Lista ordenada L dos pesos (i, j, wtij)
+  # lista ordenada L dos pesos (i, j, wtij)
   L = sorted(
     [(i, j, wtij[i][j]) for i in range(n) for j in range(m) if wtij[i][j] > 0],
     key=lambda x: x[2],
@@ -39,7 +39,7 @@ def abrir_facilidades(n, m, p, wi, dij, t=10):
 
     if j_selected not in Jopen:
       Jopen.add(j_selected)
-      L = [entry for entry in L if entry[1] != j_selected]  # evita repetição
+      L = [entry for entry in L if entry[1] != j_selected] # evita repetição
 
   return list(Jopen), L_copy
 
@@ -61,20 +61,20 @@ def alocar_clientes(Jopen, L_copy, wi, capacidade_U):
 
 def alocar_drones(Jopen, C, bij, B, nd):
   drones_por_facilidade = {j: 0 for j in Jopen}
-  drones_necessarios_total = 0
+  total_drones_necessarios = 0
 
   for j in Jopen:
     soma = sum(bij[i][j] for (i, jj) in C if jj == j)
     drones_necessarios = math.ceil(soma / B)
     drones_por_facilidade[j] = drones_necessarios
-    drones_necessarios_total += drones_necessarios
+    total_drones_necessarios += drones_necessarios
 
-  # Atribuição sequencial até acabar os drones
+  # atribuição sequencial até acabar os drones
   Jorder = sorted(drones_por_facilidade.items(), key=lambda x: x[1], reverse=True)
   atribuicao = {j: 0 for j in Jopen}
   total_atribuido = 0
 
-  while total_atribuido < min(nd, drones_necessarios_total):
+  while total_atribuido < min(nd, total_drones_necessarios):
     for j, limite in Jorder:
       if atribuicao[j] < limite:
         atribuicao[j] += 1
@@ -108,13 +108,13 @@ def atender_clientes(Jopen, C, bij, B, drones_por_facilidade):
           break
 
       if not alocado:
-        continue  # não foi possível atender esse cliente
+        continue # não foi possível atender esse cliente
 
       atendimento[j] = drones
 
   return atendimento
 
-def calcular_demanda_atendida(wi, atendimento):
+def calcular_funcao_objetivo(wi, atendimento):
   clientes_atendidos = set()
 
   for drones in atendimento.values():
@@ -125,4 +125,4 @@ def calcular_demanda_atendida(wi, atendimento):
   demanda_total_atendida = sum(wi[i] for i in clientes_atendidos)
   demanda_total = sum(wi)
 
-  return (demanda_total_atendida / demanda_total) * 100
+  return demanda_total_atendida / demanda_total
