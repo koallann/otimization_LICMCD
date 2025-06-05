@@ -22,16 +22,16 @@ for d in demandas:
 
 n = len(wi)
 m = len(candidatos)
-p = 25 # quantidade de instalações
-nd = 100 # quantidade de drones
+p = 15 # quantidade de instalações
+nd = 60 # quantidade de drones
 U = sum(wi) / (0.8 * p)
 
 start = time.time()
 
 melhor_solucao, melhor_fit = algoritmo_genetico(
   m=m, p=p, wi=wi, dij=dij, nd=nd, U=U,
-  pop_size=100, n_iter=200, taxa_mutacao=0.15,
-  gerar_individuo_por_heuristica=lambda: abrir_facilidades(n, m, p, wi, dij, t=5),
+  pop_size=100, n_iter=200, taxa_mutacao=0.3,
+  gerar_individuo_por_heuristica=lambda: abrir_facilidades(n, m, p, wi, dij, t=10),
 )
 
 elapsed = time.time() - start
