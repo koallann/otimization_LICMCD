@@ -1,54 +1,64 @@
-from entrada import *
-from distancia import *
-from heuristica import *
-from algoritmo_genetico import *
+from math import cos, radians, sqrt
 import time
 
-wi = [d["Demand (kg)"] for d in demandas]
-dij = []
+from dataset import *
+from heuristic import *
+from genetic_algorithm import *
 
-for d in demandas:
-  row = []
+def build_demands(demands):
+  return [d["Demand (kg)"] for d in demands]
 
-  for c in candidatos:
-    dist = calcular_distancia(
-      d["Latitude"], d["Longitude"],
-      c["Latitude"], c["Longitude"],
-    )
-    row.append(dist)
+def build_distances(demands, facility_candidates):
 
-  dij.append(row)
+  def calc_distance(lat1, lon1, lat2, lon2):
+    lat1_rad, lat2_rad = radians(lat1), radians(lat2)
+    lat_media = (lat1_rad + lat2_rad) / 2
+    dx = 111320 * cos(lat_media) * (lon2 - lon1)
+    dy = 111320 * (lat2 - lat1)
+    return sqrt(dx**2 + dy**2)
 
+  dij = []
 
-n = len(wi)
-m = len(candidatos)
-p = 15 # quantidade de instalações
-nd = 60 # quantidade de drones
-U = sum(wi) / (0.8 * p)
+  for d in demands:
+    row = []
 
-start = time.time()
+    for c in facility_candidates:
+      dist = calc_distance(d["Latitude"], d["Longitude"], c["Latitude"], c["Longitude"])
+      row.append(dist)
 
-melhor_solucao, melhor_fit = algoritmo_genetico(
-  m=m, p=p, wi=wi, dij=dij, nd=nd, U=U,
-  pop_size=100, n_iter=200, taxa_mutacao=0.3,
-  gerar_individuo_por_heuristica=lambda: abrir_facilidades(n, m, p, wi, dij, t=10),
-)
+    dij.append(row)
 
-elapsed = time.time() - start
+  return dij
 
-print("Instalações:", melhor_solucao)
-print("Cobertura:", melhor_fit)
-print("Tempo: {time:.2f}s".format(time=elapsed))
+# construindo lista de demandas (clientes) e mapa de distâncias (de demanda p/ instalação) 
+wi = build_demands(clients)
+dij = build_distances(clients, facility_candidates)
 
-# USO:
-# Jopen, L_copy = abrir_facilidades(n, m, p, wi, dij)
-# C = alocar_clientes(Jopen, L_copy, wi, U)
+n = len(wi) # total de demandas
+m = len(facility_candidates) # total de candidatos à instalação (centro de distribuição)
+p = 15 # parâmetro: quantidade de instalações
+nd = 60 # parâmetro: quantidade de drones
+U = sum(wi) / (0.8 * p) # capacidade de cada instalação
+
+# Jopen, L1 = open_facilities(n, m, p, wi, dij)
+# C = allocate_clients(Jopen, L1, wi, U)
 # bij = np.array([[calc_bij(wi[i], dij[i][j]) for j in range(m)] for i in range(n)])
-# drones = alocar_drones(Jopen, C, bij, B, nd)
-# atendimento = atender_clientes(Jopen, C, bij, B, drones)
+# allocation = allocate_drones(nd, Jopen, C, bij)
+# service = serve_clients(Jopen, C, bij, allocation)
 
 # print("Facilidades abertas:", Jopen)
 # print("Clientes alocados:", C)
-# print("Drones por facilidade:", drones)
-# print("Atendimento:", atendimento)
-# print("Demanda atendida: {:.2f}%".format(calcular_funcao_objetivo(wi, atendimento)))
+# print("Drones por facilidade:", allocation)
+# print("Atendimento:", service)
+# print("Cobertura: {:.2f}".format(calc_target_function(wi, service)))
+
+start = time.time()
+best_solution, best_fitness = genetic_algorithm(m, p, wi, dij, nd, U,
+                              pop_size=100, n_iter=200, mutation_rate=0.15,
+                              generate_chromo=lambda: open_facilities(n, m, p, wi, dij),
+                            )
+elapsed = time.time() - start
+
+print(f"Facilities: {best_solution}")
+print(f"Fitness:    {best_fitness}")
+print("Duration:   {time:.2f}s".format(time=elapsed))
