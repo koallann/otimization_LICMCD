@@ -4,6 +4,7 @@ import time
 from dataset import *
 from heuristic import *
 from genetic_algorithm import *
+from grasp import *
 
 def build_demands(demands):
   return [d["Demand (kg)"] for d in demands]
@@ -53,10 +54,13 @@ U = sum(wi) / (0.8 * p) # capacidade de cada instalação
 # print("Cobertura: {:.2f}".format(calc_target_function(wi, service)))
 
 start = time.time()
-solution, coverage = genetic_algorithm(m, p, wi, dij, nd, U,
-                      pop_size=100, n_iter=200, mutation_rate=0.15,
-                      generate_chromo=lambda: open_facilities(n, m, p, wi, dij),
-                    )
+
+# solution, coverage = genetic_algorithm(m, p, wi, dij, nd, U,
+#                       pop_size=100, n_iter=200, mutation_rate=0.15,
+#                       generate_chromo=lambda: open_facilities(n, m, p, wi, dij),
+#                     )
+solution, coverage = grasp(n, m, p, wi, dij, nd, U, n_iter=30)
+
 elapsed = time.time() - start
 
 print(f"Facilities: {solution}")
