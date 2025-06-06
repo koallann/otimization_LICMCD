@@ -53,12 +53,12 @@ U = sum(wi) / (0.8 * p) # capacidade de cada instalação
 # print("Cobertura: {:.2f}".format(calc_target_function(wi, service)))
 
 start = time.time()
-best_solution, best_fitness = genetic_algorithm(m, p, wi, dij, nd, U,
-                              pop_size=100, n_iter=200, mutation_rate=0.15,
-                              generate_chromo=lambda: open_facilities(n, m, p, wi, dij),
-                            )
+solution, coverage = genetic_algorithm(m, p, wi, dij, nd, U,
+                      pop_size=100, n_iter=200, mutation_rate=0.15,
+                      generate_chromo=lambda: open_facilities(n, m, p, wi, dij),
+                    )
 elapsed = time.time() - start
 
-print(f"Facilities: {best_solution}")
-print(f"Fitness:    {best_fitness}")
+print(f"Facilities: {solution}")
+print(f"Fitness:    {coverage}")
 print("Duration:   {time:.2f}s".format(time=elapsed))
